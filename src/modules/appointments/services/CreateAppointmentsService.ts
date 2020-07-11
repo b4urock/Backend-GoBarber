@@ -4,6 +4,7 @@ import { injectable, inject } from 'tsyringe';
 import AppError from '@shared/errors/AppError';
 
 import INotificationsRepository from '@modules/notifications/repositories/INotificationsRepository';
+import ICacheProvider from '@shared/container/providers/CacheProvider/models/ICacheProvider';
 import Appointment from '../infra/typeorm/entities/Appointment';
 import IAppointmentsRepository from '../repositories/IAppointmentsRepository';
 /**
@@ -26,6 +27,8 @@ class CreateAppointmentService {
 
     @inject('NotificationsRepository')
     private notificationsRepository: INotificationsRepository,
+    @inject('CacheProvider')
+    private cacheProvider: ICacheProvider,
   ) {}
 
   public async execute({
@@ -69,6 +72,13 @@ class CreateAppointmentService {
       recipient_id: provider_id,
       content: `Novo agendamento para dia ${dateFormatted}`,
     });
+
+    const cacheKey = `provider-appointments:${provider_id}:${format(
+      appointmentDate,
+      'yyyy-M-d',
+    )}`;
+
+    this.cacheProvider.invalidate(cacheKey);
 
     return appointment;
   }
